@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>배드민턴 공략 도우미</title>
+<style>
+:root{--bg:#f3f6f1;--card:#fff;--ink:#16241c;--mute:#5d6b62;--line:#d5ded6;--court:#0e6b4a;--court-ink:#fff;--shuttle:#f2c230;--warn:#b4442b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1712;--card:#18231c;--ink:#e8f0ea;--mute:#9db0a3;--line:#2b3a30;--court:#3fb98a;--court-ink:#06170f;--shuttle:#f2c230;--warn:#f08a70}}
+:root[data-theme="dark"]{--bg:#0f1712;--card:#18231c;--ink:#e8f0ea;--mute:#9db0a3;--line:#2b3a30;--court:#3fb98a;--court-ink:#06170f;--shuttle:#f2c230;--warn:#f08a70}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Pretendard","Noto Sans KR","Malgun Gothic",sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.7rem;margin:8px 0 4px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 22px}
+h2{font-size:1.05rem;margin:0 0 10px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+button.chip{font:inherit;font-size:.92rem;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+button.chip[aria-pressed="true"]{background:var(--court);color:var(--court-ink);border-color:var(--court);font-weight:600}
+button:focus-visible{outline:3px solid var(--shuttle);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--court);border-radius:8px;overflow:hidden;margin-bottom:4px}
+.seg button{font:inherit;padding:8px 26px;border:0;background:transparent;color:var(--court);cursor:pointer;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--court);color:var(--court-ink)}
+.who{margin-bottom:14px}.who:last-child{margin-bottom:0}
+.who b{display:block;margin-bottom:6px;font-size:.95rem}
+.hero{background:var(--court);color:var(--court-ink);border:0}
+.hero p{margin:0;font-size:1.12rem;font-weight:700;line-height:1.5}
+.hero small{display:block;margin-bottom:6px;opacity:.85;font-weight:400}
+ul{margin:0;padding-left:20px}li{margin:5px 0}
+.tag{display:inline-block;font-size:.8rem;padding:1px 9px;border-radius:6px;background:var(--shuttle);color:#2b2200;margin-right:6px;font-weight:600}
+.warn li::marker{color:var(--warn)}
+.empty{color:var(--mute);text-align:center;padding:26px 8px}
+</style>
+</head>
+<body>
+<main>
+<h1>배드민턴 공략 도우미</h1>
+<p class="sub">경기 종류, 상대 스타일, 경기장 조건을 고르면 대처법을 알려줍니다.</p>
+
+<section><h2>경기 종류</h2>
+<div class="seg" id="mode"><button data-m="s" aria-pressed="true">단식</button><button data-m="d" aria-pressed="false">복식</button></div></section>
+
+<section><h2>상대 플레이 스타일 <small style="font-weight:400;color:var(--mute)">(중복 선택 가능)</small></h2>
+<div id="opps"></div></section>
+
+<section><h2>경기장 조건 <small style="font-weight:400;color:var(--mute)">(해당되는 것 모두)</small></h2>
+<div class="chips" id="venue"></div></section>
+
+<div id="out"></div>
+</main>
+<script>
+const STY={
+atk:{n:'공격형 (스매시)',h:{s:'스매시를 칠 여유를 주지 않는 것이 핵심입니다. 낮고 빠른 공으로 상대 공격 자세를 무너뜨리세요.',d:'절대 높이 띄우지 마세요. 드라이브와 푸시로 낮게 눌러 공격 기회를 차단하세요.'},
+ s:['하이클리어보다 낮은 드리븐 클리어와 헤어핀으로 상대가 점프 스매시를 못 치게 하세요.','스매시는 몸 쪽(오른쪽 어깨·허리)으로 오는 공을 막기 어려워하는 경우가 많으니 수비 시 중앙 위치를 잡으세요.','상대 체력이 공격에 편중돼 있으니 랠리를 길게 끌어 지치게 하세요.'],
+ d:['상대 공격수가 후위일 때 리프트를 금지하고 몸 쪽·중간(두 사람 사이) 낮은 공으로 보내세요.','수비 시 사이드바이사이드 대형으로 스매시 각도를 줄이고, 블록은 네트 앞으로 짧게 떨어뜨리세요.','서브 리턴은 플랫 드라이브나 헤어핀으로 전위 공격수를 우선 견제하세요.'],
+ sv:{s:'낮고 짧은 서브(센터 근처)로 상대가 내려찍는 공격을 못 하게 하세요.',d:'짧은 서브를 T라인(센터)으로 보내 상대 공격수의 첫 구를 낮은 공으로 만드세요.'}},
+def:{n:'수비형 (리시버)',h:{s:'한 번에 끝내려 하지 말고 코트 네 모서리로 길게 움직이게 해 체력과 자세를 뺏으세요.',d:'스매시 한두 방으로 끝내려 하지 말고 빈 곳 연속 배분과 전위 압박으로 수비 진형을 무너뜨리세요.'},
+ s:['스매시 후 곧바로 네트 앞 드롭·푸시로 이어 3구 이후에 마무리하세요.','대각 깊은 클리어와 짧은 드롭을 섞어 앞뒤로 크게 흔드세요.','무리한 파워 스매시는 체력만 소모합니다. 페이크와 속도 변화를 쓰세요.'],
+ d:['스매시는 힘보다 각도(사이드라인 쪽, 두 사람 사이)를 우선하고 전위가 미리 준비해 푸시로 마무리하세요.','상대가 걷어 올리는 공을 전위가 차단할 수 있도록 로테이션을 빠르게 유지하세요.','드롭과 스매시를 섞어 수비 리듬을 깨세요.'],
+ sv:{s:'서브 후 첫 공격 기회에서 성급히 결정구를 노리지 말고 패턴을 쌓으세요.',d:'서브 후 전위 압박(푸시·헤어핀 노림)을 유지하세요.'}},
+net:{n:'네트 플레이형',h:{s:'네트 앞 승부를 피하고 뒤쪽으로 끌어내세요. 깊은 클리어와 플릭으로 앞 스텝을 무력화하세요.',d:'전위 선수의 차단을 피하는 낮고 빠른 드라이브, 혹은 전위 머리 위 플릭이 열쇠입니다.'},
+ s:['헤어핀 대결은 피하고 백라인 깊은 클리어로 상대 위치를 뒤로 밀어내세요.','네트 앞 공은 크로스 헤어핀이나 푸시로 예측을 흔드세요.','스핀 네트에는 라켓 면을 세워 강하게 밀어내는 푸시로 대응하세요.'],
+ d:['전위 상대에게 걸리지 않도록 서브 리턴은 후위 쪽 깊은 곳이나 플릭으로 보내세요.','네트 플레이어가 프론트에 있을 때 드라이브로 손목·허리 높이를 노리세요.','후위 상대가 약하다면 공을 뒤로 보내 전위를 벗어나게 하세요.'],
+ sv:{s:'서브는 긴 서브(하이 서브)로 상대를 뒤로 밀어내세요.',d:'서브 리턴은 헤어핀보다 플릭이나 드라이브로 전위를 의식하게 하세요.'}},
+all:{n:'올라운더 (균형형)',h:{s:'뚜렷한 약점이 없으니 초반 몇 랠리에서 약점을 탐색한 후 집중 공략하세요.',d:'서로 약점이 없으면 로테이션과 팀워크에서 우위를 잡으세요.'},
+ s:['백핸드·오른쪽 뒷코너·앞 왼쪽 중 어디가 상대적으로 약한지 초반에 확인하세요.','예측 가능한 패턴은 피하고 속도·높이를 계속 바꾸세요.','상대 페이스에 맞추지 않고 3구·5구 패턴을 하나 정해 밀고 나가세요.'],
+ d:['한 명을 집중 공략(약한 쪽)하고 다른 한 명에게 연결이 안 되게 하세요.','서브 후 전위 압박을 유지하세요.','미스가 나오면 공격 형태를 즉시 조정하는 소통을 유지하세요.'],
+ sv:{s:'서브 위치와 종류를 섞어 예측을 방해하세요.',d:'짧은 서브와 플릭 서브를 섞어 상대 첫 구를 불편하게 만드세요.'}},
+sta:{n:'체력형 (긴 랠리)',h:{s:'랠리에 말려들지 말고 3~5구 안에 결정하는 속공으로 체력 소모를 줄이세요.',d:'랠리를 늘리지 말고 서브 후 빠른 3구 공격으로 마무리하세요.'},
+ s:['긴 랠리에선 상대가 유리하니 템포를 올려 5구 이내로 끝내는 패턴을 쓰세요.','점수 사이 시간(정해진 범위 안)에 호흡을 정리해 초반 체력을 아끼세요.','드롭 후 네트 킬 등 앞 승부 비중을 늘리세요.'],
+ d:['서브 리턴 직후 공격 전환을 빠르게 하세요.','수비 상황이라도 리프트보다 블록·드라이브로 랠리를 짧게 끊으세요.','후반 세트까지 체력을 남기려면 로테이션 실수를 줄이세요.'],
+ sv:{s:'서브 직후 3구 공격을 미리 계획하세요.',d:'서브는 짧게 하고 즉각 전위 압박으로 랠리를 빨리 끝내세요.'}},
+lef:{n:'왼손잡이',h:{s:'평소와 반대 각도입니다. 포핸드 사이드에서 돌아나가는 공을 조심하세요.',d:'오른손 파트너와의 조합에서 중앙이 취약해질 수 있으니 중앙을 공략하세요.'},
+ s:['상대 포핸드는 왼쪽 라인. 평소와 반대라 크로스 스매시 각도에 익숙해지세요.','상대 백핸드 코너(내 기준 오른쪽 뒤)를 먼저 확인해 빈 곳을 공략하세요.','서브 리턴 위치를 몇 번 실험해 편한 각도를 찾으세요.'],
+ d:['좌우 조합의 중앙은 서로 미루는 공백이 생기기 쉬우니 두 사람 사이로 보내세요.','상대 왼손 스매시는 대각이 반대 방향으로 휘니 수비 위치를 조금 조정하세요.','로테이션에서 왼손 선수는 코트 오른편에서 강할 수 있으니 왼편으로 배분하세요.'],
+ sv:{s:'서브는 상대 백핸드 쪽을 우선 시도하세요.',d:'서브는 T라인과 상대 사이 공간으로 보내세요.'}}
+};
+const VEN={
+hi:{n:'천장이 낮은 체육관',t:'하이클리어와 하이서브가 천장에 닿을 수 있으니 높이 조절. 드리븐 클리어·드롭 위주로 운영하세요.'},
+ac:{n:'에어컨·바람 강함',t:'바람 방향을 워밍업에서 확인하세요. 순풍 쪽에서는 클리어 힘을 줄이고, 역풍 쪽에서는 낮고 빠른 공과 드롭 활용. 서브도 바람에 밀리니 조정하세요.'},
+out:{n:'실외·야외',t:'바람이 결정적입니다. 코트 교대 후 바람 방향이 바뀌므로 세트별 전술을 다르게 하고, 셔틀 궤적이 흔들려 스매시 결정력이 떨어집니다.'},
+lgt:{n:'천장 조명 눈부심',t:'조명 아래에서 셔틀을 놓칠 수 있으니 상대에게는 조명 위치로 공을 띄우고, 내 쪽에서는 눈부심 방향 하이클리어 대비.'},
+slp:{n:'바닥이 미끄러움',t:'급격한 방향 전환은 부상 위험이 있으니 스텝을 작게. 상대의 페이크에 무너지기 쉬우니 좌우 전환을 많이 요구하세요.'},
+sun:{n:'창문 채광·역광',t:'창가 쪽 코트에서는 역광으로 셔틀이 안 보일 수 있습니다. 상대 코트에서 역광이 되는 방향으로 공을 보내고, 내 쪽은 하이볼을 피하세요.'},
+std:{n:'표준 대회장',t:'환경 변수가 적으니 순수 스타일 대응에 집중하세요. 워밍업에서 셔틀 속도만 확인하세요.'}
+};
+const st={m:'s',a:new Set(),b:new Set(),v:new Set()};
+const $=s=>document.querySelector(s);
+function chips(el,obj,set,cb){el.innerHTML='';for(const k in obj){const b=document.createElement('button');b.className='chip';b.textContent=obj[k].n;b.setAttribute('aria-pressed',set.has(k));b.onclick=()=>{set.has(k)?set.delete(k):set.add(k);b.setAttribute('aria-pressed',set.has(k));cb()};el.appendChild(b)}}
+function buildOpps(){const o=$('#opps');o.innerHTML='';const list=st.m==='s'?[['상대 선수','a']]:[['상대 A (전위 또는 왼쪽)','a'],['상대 B (후위 또는 오른쪽)','b']];
+ list.forEach(([lab,key])=>{const w=document.createElement('div');w.className='who';w.innerHTML='<b>'+lab+'</b><div class="chips"></div>';o.appendChild(w);chips(w.lastChild,STY,st[key],render)})}
+function render(){const out=$('#out'),m=st.m;const ka=[...st.a],kb=m==='d'?[...st.b]:[];
+ if(!ka.length&&!kb.length){out.innerHTML='<div class="empty">상대 스타일을 하나 이상 선택하면 공략법이 나타납니다.</div>';return}
+ const all=[...new Set([...ka,...kb])];const lead=STY[all[0]];
+ let h='<section class="hero"><small>핵심 전략</small><p>'+lead.h[m]+'</p></section>';
+ const grp=(lab,keys)=>keys.length?'<section><h2>'+lab+'</h2>'+keys.map(k=>'<div class="who"><span class="tag">'+STY[k].n+'</span><ul>'+STY[k][m].map(t=>'<li>'+t+'</li>').join('')+'</ul></div>').join('')+'</section>':'';
+ if(m==='s')h+=grp('상대 공략법',ka);else{h+=grp('상대 A 공략',ka);h+=grp('상대 B 공략',kb);
+  if(ka.length&&kb.length){const both=ka.filter(x=>kb.includes(x));const c=[];
+   if(both.length&&both[0]==='atk')c.push('두 명 모두 공격형: 리프트는 곧 실점입니다. 낮은 드라이브 랠리를 유지하세요.');
+   if(both.length&&both[0]==='def')c.push('두 명 모두 수비형: 드롭·푸시로 앞뒤 흔들기와 인내가 필수입니다.');
+   if(ka.some(x=>x==='net')||kb.some(x=>x==='net'))c.push('전위 강한 상대가 있으면 후위 쪽에 지속적으로 공을 보내세요.');
+   if(!c.length)c.push('약한 쪽 한 명을 집중 공략해 다른 한 명과의 호흡을 깨세요. 서로 미루는 중앙을 노리세요.');
+   h+='<section><h2>조합 전략</h2><ul>'+c.map(t=>'<li>'+t+'</li>').join('')+'</ul></section>'}}
+ h+='<section><h2>서브·리시브</h2><ul>'+all.map(k=>'<li>'+STY[k].sv[m]+'</li>').join('')+'</ul></section>';
+ const vs=[...st.v];
+ if(vs.length)h+='<section class="warn"><h2>경기장 대응</h2><ul>'+vs.map(k=>'<li><b>'+VEN[k].n+':</b> '+VEN[k].t+'</li>').join('')+'</ul></section>';
+ out.innerHTML=h}
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{st.m=b.dataset.m;document.querySelectorAll('#mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));buildOpps();render()});
+chips($('#venue'),VEN,st.v,render);buildOpps();render();
+</script>
+</body>
+</html>
